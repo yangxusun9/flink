@@ -220,8 +220,9 @@ public class CliFrontend {
      */
     protected void run(String[] args) throws Exception {
         LOG.info("Running 'run' command.");
-
+        //myread 获取flink run xxxx后的配置参数，如 -t -y
         final Options commandOptions = CliFrontendParser.getRunCommandOptions();
+        //myread 解析配置参数
         final CommandLine commandLine = getCommandLine(commandOptions, args, true);
 
         // evaluate help flag
@@ -230,19 +231,23 @@ public class CliFrontend {
             return;
         }
 
+        //myread 根据inActive 方法来依次判断采用哪个客户端
         final CustomCommandLine activeCommandLine =
                 validateAndGetActiveCommandLine(checkNotNull(commandLine));
 
         final ProgramOptions programOptions = ProgramOptions.create(commandLine);
 
+        //myread 获取jar包和主方法入口
         final List<URL> jobJars = getJobJarAndDependencies(programOptions);
 
+        //myread 封装运行资源参数，如核心树，内存大小
         final Configuration effectiveConfiguration =
                 getEffectiveConfiguration(activeCommandLine, commandLine, programOptions, jobJars);
 
         LOG.debug("Effective executor configuration: {}", effectiveConfiguration);
 
         try (PackagedProgram program = getPackagedProgram(programOptions, effectiveConfiguration)) {
+            //myread 执行main方法
             executeProgram(effectiveConfiguration, program);
         }
     }
@@ -1121,6 +1126,7 @@ public class CliFrontend {
                 GlobalConfiguration.loadConfiguration(configurationDirectory);
 
         // 3. load the custom command lines
+        //myread 依次添加三种客户端模式GenericCLI，Yarn，Standalone
         final List<CustomCommandLine> customCommandLines =
                 loadCustomCommandLines(configuration, configurationDirectory);
 
@@ -1129,6 +1135,7 @@ public class CliFrontend {
             final CliFrontend cli = new CliFrontend(configuration, customCommandLines);
 
             SecurityUtils.install(new SecurityConfiguration(cli.configuration));
+            //myread 核心执行逻辑
             retCode = SecurityUtils.getInstalledContext().runSecured(() -> cli.parseAndRun(args));
         } catch (Throwable t) {
             final Throwable strippedThrowable =

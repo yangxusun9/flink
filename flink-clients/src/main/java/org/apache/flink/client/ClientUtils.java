@@ -95,7 +95,7 @@ public enum ClientUtils {
             LOG.info(
                     "Starting program (detached: {})",
                     !configuration.getBoolean(DeploymentOptions.ATTACHED));
-
+            //myread 封装环境
             ContextEnvironment.setAsContext(
                     executorServiceLoader,
                     configuration,
@@ -111,6 +111,7 @@ public enum ClientUtils {
                     suppressSysout);
 
             try {
+                //myread 执行逻辑
                 program.invokeInteractiveModeForExecution();
             } finally {
                 ContextEnvironment.unsetAsContext();

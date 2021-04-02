@@ -352,6 +352,7 @@ public class PackagedProgram implements AutoCloseable {
         }
 
         try {
+            //myread 执行用户传入jar包的main方法
             mainMethod.invoke(null, (Object) args);
         } catch (IllegalArgumentException e) {
             throw new ProgramInvocationException(
