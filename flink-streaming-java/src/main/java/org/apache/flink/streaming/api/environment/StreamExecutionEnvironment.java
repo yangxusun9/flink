@@ -1957,6 +1957,7 @@ public class StreamExecutionEnvironment {
                 configuration.get(DeploymentOptions.TARGET));
 
         CompletableFuture<JobClient> jobClientFuture =
+                //myread 根据配置生成对应的执行器，然后执行
                 executorFactory
                         .getExecutor(configuration)
                         .execute(streamGraph, configuration, userClassloader);

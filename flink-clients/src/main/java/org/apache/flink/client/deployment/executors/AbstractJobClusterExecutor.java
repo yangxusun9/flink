@@ -67,17 +67,21 @@ public class AbstractJobClusterExecutor<
             @Nonnull final Configuration configuration,
             @Nonnull final ClassLoader userCodeClassloader)
             throws Exception {
+        //myread 从StreamGraph 转化为JobGraph
         final JobGraph jobGraph = PipelineExecutorUtils.getJobGraph(pipeline, configuration);
 
         try (final ClusterDescriptor<ClusterID> clusterDescriptor =
+                //myread 创建集群描述器,包含了yarn，flink的环境和配置信息
                 clusterClientFactory.createClusterDescriptor(configuration)) {
             final ExecutionConfigAccessor configAccessor =
                     ExecutionConfigAccessor.fromConfiguration(configuration);
 
+            //myread 封装了一些JM，TM，Slots设置
             final ClusterSpecification clusterSpecification =
                     clusterClientFactory.getClusterSpecification(configuration);
 
             final ClusterClientProvider<ClusterID> clusterClientProvider =
+                    //myread 部署核心逻辑
                     clusterDescriptor.deployJobCluster(
                             clusterSpecification, jobGraph, configAccessor.getDetachedMode());
             LOG.info("Job has been submitted with JobID " + jobGraph.getJobID());

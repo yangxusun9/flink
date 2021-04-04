@@ -520,6 +520,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
             throws Exception {
 
         final UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
+        //myread 验证k6s权限
         if (HadoopUtils.isKerberosSecurityEnabled(currentUser)) {
             boolean useTicketCache =
                     flinkConfiguration.getBoolean(SecurityOptions.KERBEROS_LOGIN_USETICKETCACHE);
@@ -530,16 +531,15 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
                                 + "does not have Kerberos credentials or delegation tokens!");
             }
         }
-
+        //myread 检查集群环境是否ok
         isReadyForDeployment(clusterSpecification);
 
         // ------------------ Check if the specified queue exists --------------------
 
         checkYarnQueues(yarnClient);
-
+        //myread 检查yarn集群资源是否满足要求
         // ------------------ Check if the YARN ClusterClient has the requested resources
         // --------------
-
         // Create application via yarnClient
         final YarnClientApplication yarnApplication = yarnClient.createApplication();
         final GetNewApplicationResponse appResponse = yarnApplication.getNewApplicationResponse();
@@ -590,6 +590,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
                 ClusterEntrypoint.INTERNAL_CLUSTER_EXECUTION_MODE, executionMode.toString());
 
         ApplicationReport report =
+                //myread 核心执行逻辑
                 startAppMaster(
                         flinkConfiguration,
                         applicationName,
@@ -763,7 +764,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
             throws Exception {
 
         // ------------------ Initialize the file systems -------------------------
-
+        //myread 初始化文件系统
         org.apache.flink.core.fs.FileSystem.initialize(
                 configuration, PluginUtils.createPluginManagerFromRootFolder(configuration));
 
@@ -783,9 +784,10 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 
         ApplicationSubmissionContext appContext = yarnApplication.getApplicationSubmissionContext();
 
+        //myread 获取文件上传路径
         final List<Path> providedLibDirs =
                 Utils.getQualifiedRemoteSharedPaths(configuration, yarnConfiguration);
-
+        //myread 获取文件上传器
         final YarnApplicationFileUploader fileUploader =
                 YarnApplicationFileUploader.from(
                         fs,
@@ -795,6 +797,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
                         getFileReplication());
 
         // The files need to be shipped and added to classpath.
+        //myread 用户指定上传的文件列表
         Set<File> systemShipFiles = new HashSet<>(shipFiles.size());
         for (File file : shipFiles) {
             systemShipFiles.add(file.getAbsoluteFile());
@@ -826,7 +829,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
             appContext.setMaxAppAttempts(
                     configuration.getInteger(YarnConfigOptions.APPLICATION_ATTEMPTS.key(), 1));
         }
-
+        //myread 还是上传jar包
         final Set<Path> userJarFiles = new HashSet<>();
         if (jobGraph != null) {
             userJarFiles.addAll(
@@ -933,6 +936,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 
         // write job graph to tmp file and add it to local resource
         // TODO: server use user main method to generate job graph
+        //myread 将作业图写入到本地一个临时文件
         if (jobGraph != null) {
             File tmpJobGraphFile = null;
             try {
@@ -1091,9 +1095,11 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
         }
 
         amContainer.setLocalResources(fileUploader.getRegisteredLocalResources());
+        //myread jar包，flink依赖，flink 配置文件上传结束
         fileUploader.close();
 
         // Setup CLASSPATH and environment variables for ApplicationMaster
+        //myread 封装环境信息，类路径到AM
         final Map<String, String> appMasterEnv = new HashMap<>();
         // set user specified app master environment variables
         appMasterEnv.putAll(
@@ -1139,7 +1145,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 
         // set classpath from YARN configuration
         Utils.setupYarnClassPath(yarnConfiguration, appMasterEnv);
-
+        //myread 封装环境信息，类路径到AM
         amContainer.setEnvironment(appMasterEnv);
 
         // Set up resource type requirements for ApplicationMaster
@@ -1175,12 +1181,14 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
                 new DeploymentFailureHook(yarnApplication, fileUploader.getApplicationDir());
         Runtime.getRuntime().addShutdownHook(deploymentFailureHook);
         LOG.info("Submitting application master " + appId);
+        //myread 启动ApplicationMaster
         yarnClient.submitApplication(appContext);
 
         LOG.info("Waiting for the cluster to be allocated");
         final long startTime = System.currentTimeMillis();
         ApplicationReport report;
         YarnApplicationState lastAppState = YarnApplicationState.NEW;
+        //myread 根据容器状态打印日志
         loop:
         while (true) {
             try {

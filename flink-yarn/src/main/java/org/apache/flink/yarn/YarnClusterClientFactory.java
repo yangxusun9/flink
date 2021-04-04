@@ -74,6 +74,7 @@ public class YarnClusterClientFactory
         return Optional.of(YarnDeploymentTarget.APPLICATION.getName());
     }
 
+    //myread 初始化yarn客户端并启动，然后创建集群描述器
     private YarnClusterDescriptor getClusterDescriptor(Configuration configuration) {
         final YarnClient yarnClient = YarnClient.createYarnClient();
         final YarnConfiguration yarnConfiguration =
